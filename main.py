@@ -1,5 +1,6 @@
 import hydra
 from config import Evaluation
+from multiprocess import set_start_method
 from hydra.core.config_store import ConfigStore
 
 # Hydra 경고 메시지 필터링
@@ -18,4 +19,5 @@ def main(cfg: Evaluation):
 
 
 if __name__ == "__main__":
+    set_start_method('spawn')
     main()
