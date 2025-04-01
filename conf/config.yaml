@@ -1,3 +1,11 @@
+label: "default"
+
+hydra:
+  run:
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${label}
+  sweep:
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${label}
+
 chunking:
   name: "Semantic Chunking"
 pre_retrieval:
