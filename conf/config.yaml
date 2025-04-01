@@ -1,0 +1,12 @@
+chunking:
+  name: "Semantic Chunking"
+pre_retrieval:
+  name: "Pre-retrieval"
+retrieval:
+  name: "Retrieval"
+post_retrieval:
+  name: "Post-retrieval"
+generation:
+  name: "Generation"
+evaluation:
+  name: "Evaluation"
