@@ -23,24 +23,21 @@ class AbstractChunker(TextSplitter):
         self.sentence_split_regex = sentence_split_regex
         self.breakpoint_threshold_amount = breakpoint_threshold_amount
     
-    def __cosine_similarity(self, X: Matrix, Y: Matrix) -> np.ndarray:
-        """Row-wise cosine similarity between two equal-width matrices."""
-        if len(X) == 0 or len(Y) == 0:
-            return np.array([])
-
+    def __cosine_similarity(self, X, Y):
+        # 리스트를 numpy 배열로 변환
         X = np.array(X)
         Y = np.array(Y)
-        if X.shape[1] != Y.shape[1]:
-            raise ValueError(
-                f"Number of columns in X and Y must be the same. X has shape {X.shape} "
-                f"and Y has shape {Y.shape}."
-            )
-        X_norm = np.linalg.norm(X, axis=1)
-        Y_norm = np.linalg.norm(Y, axis=1)
-        # Ignore divide by zero errors run time warnings as those are handled below.
-        with np.errstate(divide="ignore", invalid="ignore"):
-            similarity = np.dot(X, Y.T) / np.outer(X_norm, Y_norm)
-        similarity[np.isnan(similarity) | np.isinf(similarity)] = 0.0
+        
+        # 차원을 (3072,)로 변경
+        X = X.reshape(-1)
+        Y = Y.reshape(-1)
+        
+        # 정규화
+        X_norm = np.linalg.norm(X)
+        Y_norm = np.linalg.norm(Y)
+        
+        # 코사인 유사도 계산
+        similarity = np.dot(X, Y) / (X_norm * Y_norm)
         return similarity
     
     def _combine_sentences(self, sentences: List[dict], buffer_size: int = 1) -> List[dict]:
@@ -79,7 +76,7 @@ class AbstractChunker(TextSplitter):
             embedding_current = sentences[i]["combined_sentence_embedding"]
             embedding_next = sentences[i + 1]["combined_sentence_embedding"]
 
-            similarity = self.__cosine_similarity([embedding_current], [embedding_next])[0][0]
+            similarity = self.__cosine_similarity(embedding_current, embedding_next)
 
             distance = 1 - similarity
 
@@ -160,12 +157,12 @@ class SemanticChunker(AbstractChunker):
 
     def __init__(
         self,
-        embedding_model: Optional[object]=None,
+        embedding_function: Optional[object]=None,
         separators: Optional[List[str]]=None,
         **kwargs: Any,
     ) -> None:
         """Create a new TextSplitter."""
-        super().__init__(embeddings=embedding_model, **kwargs)
+        super().__init__(embeddings=embedding_function, **kwargs)
         self._separators = ["\n\n", "\n", ".", "?", "!", " ", ""] if separators is None else separators
 
     def _split_text(self, text: str) -> List[str]:

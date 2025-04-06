@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 from importlib import resources
 from modules.chunking.evaluation_framework.base_evaluation import BaseEvaluation
@@ -5,21 +6,19 @@ from modules.chunking.evaluation_framework.base_evaluation import BaseEvaluation
 class GeneralEvaluation(BaseEvaluation):
     def __init__(
             self, 
-            questions_df_path:Optional[str]='./evaluation_framework/general_evaluation_data/questions_df_chatlogs.csv', 
+            questions_df_path:Optional[str]=None,
             chroma_db_path:Optional[str]=None, 
-            corpora_id_paths:Optional[dict]={'chatlogs': './evaluation_framework/general_evaluation_data/corpora/chatlogs.md'}, 
+            corpora_id_paths:Optional[dict]=None,
             verbose:bool=False
         ):
-        # with resources.as_file(resources.files('chunking_evaluation.evaluation_framework') / 'general_evaluation_data') as general_benchmark_path:
-        #     self.general_benchmark_path = general_benchmark_path
-        #     questions_df_path = self.general_benchmark_path / 'questions_df.csv'
-
-        #     corpora_folder_path = self.general_benchmark_path / 'corpora'
-        #     corpora_filenames = [f for f in corpora_folder_path.iterdir() if f.is_file()]
-
-        #     corpora_id_paths = {
-        #         f.stem: str(f) for f in corpora_filenames
-        #     }
+        with resources.as_file(resources.files('modules.chunking.evaluation_framework') / 'general_evaluation_data') as general_benchmark_path:
+            if questions_df_path is None:
+                questions_df_path = os.path.join(general_benchmark_path, 'questions_df_chatlogs.csv')
+            
+            if corpora_id_paths is None:
+                corpora_id_paths = {
+                    'chatlogs': os.path.join(general_benchmark_path, 'corpora', 'chatlogs.md')
+                }
 
             if verbose:
                 print(f"▶ Questions_df_path : {str(questions_df_path)}")

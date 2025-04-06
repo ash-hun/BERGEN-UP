@@ -107,16 +107,18 @@ class BaseEvaluation:
 
     def _load_questions_df(self, verbose:bool=False):
         if os.path.exists(self.questions_csv_path):
+            print("File exists, reading CSV...")
             self.questions_df = pd.read_csv(self.questions_csv_path)
             self.questions_df['references'] = self.questions_df['references'].apply(json.loads)
         else:
+            print(f"File does not exist: {self.questions_csv_path}")
             self.questions_df = pd.DataFrame(columns=['question', 'references', 'corpus_id'])
         
         self.corpus_list = self.questions_df['corpus_id'].unique().tolist()
         if verbose:
             print("="*100)
-            print(self.corpus_list)
-            print(self.questions_df)
+            print(f"Corpus list: {self.corpus_list}")
+            print(f"Questions DataFrame:\n{self.questions_df}")
             print("="*100)
 
     def _get_chunks_and_metadata(self, splitter):
@@ -300,8 +302,11 @@ class BaseEvaluation:
         if collection is None:
             try:
                 self.chroma_client.delete_collection(collection_name)
-            except ValueError as e:
-                pass
+            except chromadb.errors.NotFoundError:
+                pass  # Collection이 존재하지 않으면 무시
+            except Exception as e:
+                print(f"Error deleting collection: {e}")
+                raise e
             collection = self.chroma_client.create_collection(collection_name, embedding_function=embedding_function, metadata={"hnsw:search_ef":50})
             print("▶ Created collection: ", collection_name)
 
@@ -379,7 +384,7 @@ class BaseEvaluation:
         question_collection = None
 
         if self.is_general:
-            with resources.as_file(resources.files('chunking_evaluation.evaluation_framework') / 'general_evaluation_data') as general_benchmark_path:
+            with resources.as_file(resources.files('modules.chunking.evaluation_framework') / 'general_evaluation_data') as general_benchmark_path:
                 questions_client = chromadb.PersistentClient(path=os.path.join(general_benchmark_path, 'questions_db'))
                 if embedding_function.__class__.__name__ == "OpenAIEmbeddingFunction":
                     try:
@@ -396,20 +401,23 @@ class BaseEvaluation:
                         print("Warning: Failed to use the frozen embeddings originally used in the paper. As a result, this package will now generate a new set of embeddings. The change should be minimal and only come from the noise floor of SentenceTransformer's embedding function. The error: ", e)
         
         if not self.is_general or question_collection is None:
-            # if self.is_general:
-            #     print("FAILED TO LOAD GENERAL EVALUATION")
             try:
                 self.chroma_client.delete_collection("auto_questions")
-            except ValueError as e:
-                pass
+            except chromadb.errors.NotFoundError:
+                pass  # Collection이 존재하지 않으면 무시
             question_collection = self.chroma_client.create_collection("auto_questions", embedding_function=embedding_function, metadata={"hnsw:search_ef":50})
             print("▶ Created collection: auto_questions")
-            question_collection.add(
-                documents=self.questions_df['question'].tolist(),
-                metadatas=[{"corpus_id": x} for x in self.questions_df['corpus_id'].tolist()],
-                ids=[str(i) for i in self.questions_df.index]
-            )
-            print("▶ Complete add : auto_questions")
+            
+            # 데이터가 있는지 확인
+            if len(self.questions_df) > 0:
+                question_collection.add(
+                    documents=self.questions_df['question'].tolist(),
+                    metadatas=[{"corpus_id": x} for x in self.questions_df['corpus_id'].tolist()],
+                    ids=[str(i) for i in self.questions_df.index]
+                )
+                print("▶ Complete add : auto_questions")
+            else:
+                print("Warning: No questions found in questions_df")
         
         question_db = question_collection.get(include=['embeddings'])
         
