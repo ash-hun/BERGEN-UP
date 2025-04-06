@@ -175,3 +175,4 @@ cython_debug/
 
 # hydra settings
 outputs/
+conf/config_dev.yaml
