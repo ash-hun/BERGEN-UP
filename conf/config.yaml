@@ -6,8 +6,21 @@ hydra:
   sweep:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${label}
 
+
+common:
+  OPENAI_API_KEY: "default_openai_api_key"
 chunking:
-  name: "Semantic Chunking"
+  strategies: 
+    # - Semantic Chunking:
+    #       mode: openai
+    #       embedding_model: "text-embedding-3-large"
+    #       custom_url: "custom_embedding_function_api_address"
+    - Recursive Token Chunking:
+        chunk_size: 800
+        chunk_overlap: 400
+    # - Fixed Token Chunking:
+    #     chunk_size: 800
+    #     chunk_overlap: 400
 pre_retrieval:
   name: "Pre-retrieval"
 retrieval:

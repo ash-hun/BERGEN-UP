@@ -2,13 +2,13 @@
 #Copyright (c) 2025-present Ash-Hun.
 #MIT license
 
+import warnings
+from multiprocessing import set_start_method
 import hydra
-from config import Evaluation
-from multiprocess import set_start_method
 from hydra.core.config_store import ConfigStore
+from config import Evaluation
 
 # Hydra 경고 메시지 필터링
-import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="hydra")
 
 cs = ConfigStore.instance()
@@ -19,6 +19,10 @@ def main(cfg: Evaluation):
     '''
     ✨ Main function to run the BERGEN-UP ✨
     '''
+    from modules.rag import RAG
+    rag_module = RAG(config=cfg)
+    rag_module.evaluate(verbose=True)
+    print(f"Configuration: {cfg}")
     print("Hello from bergen-up!")
 
 
