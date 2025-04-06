@@ -6,7 +6,12 @@
 
 
 ## Key Points
-- End to End Pipeline
+- **E2E Evaluation Pipeline** for RAG
+    - Chunking
+    - Pre-Retrieval
+    - Retrieval
+    - Post-Retrieval
+    - Generation
 
 
 ## How to run
