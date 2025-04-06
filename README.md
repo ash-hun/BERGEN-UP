@@ -12,5 +12,5 @@
 ## How to run
 
 ```bash
-$ uv run main.py label='__experiments_name__'
+$ uv run pipeline.py label='__experiments_name__'
 ```
