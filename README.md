@@ -16,6 +16,9 @@
     - Retrieval
     - Post-Retrieval
     - Generation
+- **Extra Module** for RAG
+    - Generate Synthetic Dataset
+        - QA (= Question Answering)
 
 
 ## 🥑 How to run pipeline?

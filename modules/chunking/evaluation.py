@@ -7,17 +7,27 @@ from modules.chunking.chunker.semantic_chunker import SemanticChunker
 from modules.chunking.chunker.recursive_token_chunker import RecursiveTokenChunker
 from modules.chunking.chunker.fixed_token_chunker import TextSplitter, FixedTokenChunker
 from modules.chunking.evaluation_framework.general_evaluation import GeneralEvaluation
+
 class ChunkingEvaluation:
+    '''
+    Chunking Evaluation Module
+    '''
     def __init__(
         self, 
-        chunking_strategy:List[str],
+        chunking_strategy:List[dict],
         openai_api_key:Optional[str]=None
     ) -> None:
-        self.chunking_strategy = chunking_strategy
+        self.questions_df_path = chunking_strategy[0]['path']+'questions_df_chatlogs.csv'
+        self.corpora_id_path = chunking_strategy[0]['path']+'corpora_id_chatlogs.csv'
+        if len(chunking_strategy) > 1:
+            self.chunking_strategy = chunking_strategy[1:]
+        else:
+            raise ValueError("Chunking strategy must be included in the config file")
         self.openai_api_key = openai_api_key
+        self.ef = None
     
     def __str__(self) -> str:
-        return "ChunkingEvaluation module"
+        return "Chunking Evaluation Module"
     
     def __repr__(self) -> str:
         return self.__str__()
@@ -53,7 +63,12 @@ class ChunkingEvaluation:
         return chunking_strategies
     
     def run(self, verbose:bool=True) -> pd.DataFrame:
-        chunking_evaluator = GeneralEvaluation(verbose=True)
+        ''' Main function to run the chunking evaluation '''
+        chunking_evaluator = GeneralEvaluation(
+            questions_df_path=self.questions_df_path, 
+            corpora_id_paths=self.corpora_id_path,
+            verbose=verbose
+        )
         # Run chunking evaluation
         results = []
         for chunker in self._get_chunking_strategy(verbose=verbose):
