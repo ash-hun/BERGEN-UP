@@ -9,6 +9,7 @@ import chromadb
 import numpy as np
 from typing import List
 from importlib import resources
+from rich.console import Console
 
 def sum_of_ranges(ranges):
     return sum(end - start for start, end in ranges)
@@ -94,6 +95,7 @@ class BaseEvaluation:
         self.questions_csv_path = questions_csv_path
         self.corpus_list = []
         self._load_questions_df()
+        self.console = Console()
 
         # self.questions_df = pd.read_csv(questions_csv_path)
         # self.questions_df['references'] = self.questions_df['references'].apply(json.loads)
@@ -107,11 +109,11 @@ class BaseEvaluation:
 
     def _load_questions_df(self, verbose:bool=False):
         if os.path.exists(self.questions_csv_path):
-            print("File exists, reading CSV...")
+            self.console.log("File exists, reading CSV...", style="bold green")
             self.questions_df = pd.read_csv(self.questions_csv_path)
             self.questions_df['references'] = self.questions_df['references'].apply(json.loads)
         else:
-            print(f"File does not exist: {self.questions_csv_path}")
+            self.console.log(f"File does not exist: {self.questions_csv_path}", style="bold red")
             self.questions_df = pd.DataFrame(columns=['question', 'references', 'corpus_id'])
         
         self.corpus_list = self.questions_df['corpus_id'].unique().tolist()
@@ -124,6 +126,8 @@ class BaseEvaluation:
     def _get_chunks_and_metadata(self, splitter):
         # Warning: metadata will be incorrect if a chunk is repeated since we use .find() to find the start index. 
         # This isn't pratically an issue for chunks over 1000 characters.
+        self.console.log(f"Corpus list: {self.corpus_list}", style="bold green")
+        self.console.log(f"Corpus Id Path: {self.corpora_id_paths}", style="bold green")
 
         documents = []
         metadatas = []
