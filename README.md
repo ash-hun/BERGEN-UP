@@ -14,6 +14,13 @@
             - iou
     - Pre-Retrieval
     - Retrieval
+        - evaluation level
+            - precision@k
+            - recall@k  
+            - f1@k
+            - ndcg@k
+            - hit_rate@k
+            - mrr
     - Post-Retrieval
     - Generation
 - **Extra Module** for RAG
@@ -60,6 +67,40 @@ $ uv run pipeline.py label='__experiments_name__'
             - Fixed Token Chunking:
                 chunk_size: 800
                 chunk_overlap: 400
+    ```
+
+</details>
+
+<details>
+<summary>Retrieval Module</summary>
+
+- 핵심 기능
+    - Evaluation Level 평가
+        - Metric : 
+            - precision@k : 검색된 상위 k개 결과 중 관련 문서의 비율
+            - recall@k : 전체 관련 문서 중 상위 k개 결과에서 검색된 비율
+            - f1@k : precision@k와 recall@k의 조화평균
+            - ndcg@k : 순위를 고려한 누적 할인 게인
+            - hit_rate@k : 상위 k개 결과에 관련 문서가 하나라도 있는 비율
+            - mrr : 첫 번째 관련 문서의 순위 역수 평균
+
+- 사용법
+    - `conf/config.yaml`의 `retrieval` 섹션에 아래 내용을 참고하여 작성한다.
+    ```yaml
+    retrieval:
+        strategies: 
+            - sample_data_path: "${hydra:runtime.cwd}/data/retrieval/sample_data.json"
+            - top_k: 10
+            - strategies: 
+                - Semantic Search:
+                    embedding_model: "text-embedding-3-large"
+                - Lexical Search:
+                    embedding_model: "text-embedding-3-large"
+                - Hybrid Search:
+                    embedding_model: "text-embedding-3-large"
+                    scoring_method: "convex combination"
+                    lexical_weight: 0.5
+                    semantic_weight: 0.5
     ```
 
 </details>
