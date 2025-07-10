@@ -1,0 +1,50 @@
+{
+    "metadata": {
+        "description": "Query decomposition evaluation dataset",
+        "purpose": "Evaluate the quality of decomposing complex queries into simpler sub-queries"
+    },
+    "complex_query": {
+        "uuid-1": "Compare the performance of BERT and GPT models for sentiment analysis and text generation tasks, and explain their architectural differences",
+        "uuid-2": "How do convolutional neural networks process images for object detection, and what are the differences between YOLO and R-CNN approaches?",
+        "uuid-3": "Explain how gradient descent works in neural networks and compare SGD, Adam, and RMSprop optimizers",
+        "uuid-4": "What are the steps involved in building a recommendation system using collaborative filtering and content-based filtering?",
+        "uuid-5": "How does reinforcement learning work in game playing AI, and what are the differences between Q-learning and policy gradient methods?"
+    },
+    "decomposed_queries": {
+        "uuid-1": [
+            "What is BERT and how does it work?",
+            "What is GPT and how does it work?",
+            "How does BERT perform in sentiment analysis tasks?",
+            "How does GPT perform in text generation tasks?",
+            "What are the architectural differences between BERT and GPT?"
+        ],
+        "uuid-2": [
+            "How do convolutional neural networks process images?",
+            "What is object detection in computer vision?",
+            "How does the YOLO algorithm work for object detection?",
+            "How does the R-CNN algorithm work for object detection?",
+            "What are the differences between YOLO and R-CNN?"
+        ],
+        "uuid-3": [
+            "What is gradient descent in neural networks?",
+            "How does stochastic gradient descent (SGD) work?",
+            "How does the Adam optimizer work?",
+            "How does the RMSprop optimizer work?",
+            "What are the differences between SGD, Adam, and RMSprop?"
+        ],
+        "uuid-4": [
+            "What is a recommendation system?",
+            "How does collaborative filtering work?",
+            "How does content-based filtering work?",
+            "What are the steps to build a collaborative filtering system?",
+            "What are the steps to build a content-based filtering system?"
+        ],
+        "uuid-5": [
+            "What is reinforcement learning?",
+            "How is reinforcement learning used in game playing AI?",
+            "What is Q-learning and how does it work?",
+            "What are policy gradient methods and how do they work?",
+            "What are the differences between Q-learning and policy gradient methods?"
+        ]
+    }
+}

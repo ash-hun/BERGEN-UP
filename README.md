@@ -6,14 +6,17 @@
 
 
 ## 🍒 Key Feature
-- **E2E Evaluation Pipeline** for RAG
-    - Chunking
+- **BERGEN-UP Pipeline** 
+    - *Chunking*
         - token level
             - recall
             - precision
             - iou
-    - Pre-Retrieval
-    - Retrieval
+    - *Pre-Retrieval*
+        - multi-query
+        - decomposition
+        - hyde
+    - *Retrieval*
         - evaluation level
             - precision@k
             - recall@k  
@@ -21,11 +24,19 @@
             - ndcg@k
             - hit_rate@k
             - mrr
-    - Post-Retrieval
-    - Generation
+    - *Post-Retrieval*
+    - *Generation*
         - static metric
             - groundedness
             - answer_relevancy
+- **BENCHMARK Pipeline**
+    - *Bench-Test*
+        - BEIR
+        - ASQA
+        - TriviaQA
+        - HotpotQA
+        - WikiQA
+        - NQ
 - **Extra Module** for RAG
     - Generate Synthetic Dataset
         - QA (= Question Answering)
@@ -71,6 +82,12 @@ $ uv run pipeline.py label='__experiments_name__'
                 chunk_size: 800
                 chunk_overlap: 400
     ```
+
+</details>
+
+<details>
+<summary>Pre-Retrieval Module</summary>
+
 
 </details>
 

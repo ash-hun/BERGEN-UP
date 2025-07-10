@@ -107,7 +107,7 @@ class RetrievalEvaluation:
                 self.console.log(f"❌ Evaluation failed: {str(e)}", style="bold red")
             raise e
     
-    def _display_results(self, summary:bool=True, results: Dict[str, Dict[str, float]]=None) -> None:
+    def _display_results(self, results: Dict[str, Dict[str, float]]=None, summary:bool=True) -> None:
         """
         Display evaluation results in a formatted table.
         
