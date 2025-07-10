@@ -88,6 +88,35 @@ $ uv run pipeline.py label='__experiments_name__'
 <details>
 <summary>Pre-Retrieval Module</summary>
 
+- 핵심 기능
+    - LLM-as-a-Judge 기반 품질 평가
+        - Multi-Query 평가 지표:
+            - diversity : 생성된 다중 쿼리들 간의 다양성 평가 (0-1)
+            - coverage : 원본 쿼리의 다양한 측면을 얼마나 포괄하는지 평가 (0-1)
+            - relevance : 생성된 쿼리들이 원본 쿼리와 얼마나 관련성이 있는지 평가 (0-1)
+        - Query Decomposition 평가 지표:
+            - completeness : 복잡한 쿼리를 얼마나 완전하게 분해했는지 평가 (0-1)
+            - granularity : 분해된 쿼리들의 적절한 세분화 정도 평가 (0-1)
+            - independence : 각 분해된 쿼리가 독립적으로 답변 가능한지 평가 (0-1)
+            - answerability : 분해된 쿼리들이 실제로 답변 가능한지 평가 (0-1)
+        - HyDE (Hypothetical Document Embeddings) 평가 지표:
+            - relevance : 생성된 가상 문서가 쿼리와 얼마나 관련성이 있는지 평가 (0-1)
+            - specificity : 생성된 문서가 얼마나 구체적이고 상세한지 평가 (0-1)
+            - factuality : 생성된 문서의 사실적 정확성 평가 (0-1)
+            - coherence : 생성된 문서의 일관성과 논리적 흐름 평가 (0-1)
+
+- 사용법
+    - `conf/config.yaml`의 `pre_retrieval` 섹션에 아래 내용을 참고하여 작성한다.
+    ```yaml
+    pre_retrieval:
+        strategies: 
+            - Multi Query:
+                path: "${hydra:runtime.cwd}/data/pre_retrieval/multi_query/sample_data.json"
+            - Query Decomposition:
+                path: "${hydra:runtime.cwd}/data/pre_retrieval/query_decomposition/sample_data.json"
+            - HyDE:
+                path: "${hydra:runtime.cwd}/data/pre_retrieval/hyde/sample_data.json"
+    ```
 
 </details>
 
