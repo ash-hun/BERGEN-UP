@@ -23,6 +23,9 @@
             - mrr
     - Post-Retrieval
     - Generation
+        - static metric
+            - groundedness
+            - answer_relevancy
 - **Extra Module** for RAG
     - Generate Synthetic Dataset
         - QA (= Question Answering)
@@ -91,6 +94,28 @@ $ uv run pipeline.py label='__experiments_name__'
         strategies: 
             - sample_data_path: "${hydra:runtime.cwd}/data/retrieval/sample_data.json"
             - top_k: 10
+    ```
+
+</details>
+
+<details>
+<summary>Generation Module</summary>
+
+- 핵심 기능
+    - G-Eval 기반 생성 품질 평가
+        - Metric : 
+            - groundedness : 생성된 답변이 제공된 컨텍스트에 얼마나 근거하는지 평가 (0-1)
+            - answer_relevancy : 생성된 답변이 질문에 얼마나 관련성이 있는지 평가 (0-1)
+
+- 사용법
+    - `conf/config.yaml`의 `generation` 섹션에 아래 내용을 참고하여 작성한다.
+    ```yaml
+    generation:
+        strategies: 
+            - sample_data_path: "${hydra:runtime.cwd}/data/generation/sample_generation_data.json"
+            - evaluation_metrics:
+                - groundedness
+                - answer_relevancy
     ```
 
 </details>
