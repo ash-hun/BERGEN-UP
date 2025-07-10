@@ -9,7 +9,7 @@ from modules.post_retrieval.evaluation import PostRetrievalEvaluation
 
 class RAG:
     ''' 🥑 Orchestration of BERGEN-UP RAG pipeline 🥑 '''
-    def __init__(self, config:Evaluation, **kwargs):
+    def __init__(self, config:Evaluation):
         self.config = config
         self.console = Console()
     
@@ -49,8 +49,8 @@ class RAG:
             openai_api_key=self.config.common.OPENAI_API_KEY
         )
     
-    def evaluate(self, verbose:bool=True):
-        ''' Main function to run the BERGEN-UP RAG pipeline '''
+    def evaluate(self, verbose:bool=True) -> None:
+        ''' [ Main function to run the BERGEN-UP RAG pipeline ] '''
         # Chunking Evaluation
         if hasattr(self.config.chunking, 'strategies') and self.config.chunking.strategies:
             # Title Logging

@@ -1,0 +1,26 @@
+{
+    "question": {
+        "uuid-1": "What is machine learning?",
+        "uuid-2": "How does neural network work?",
+        "uuid-3": "What is deep learning?"
+    },
+    "context_gt_map": {
+        "uuid-1": 1,
+        "uuid-2": 2,
+        "uuid-3": 3
+    },
+    "context_gt": {
+        "1": "Machine learning is a branch of artificial intelligence...",
+        "2": "Neural networks are computing systems inspired by biological neural networks...",
+        "3": "Deep learning is a subset of machine learning...",
+        "4": "AI is the simulation of human intelligence...",
+        "5": "Data science involves extracting insights...",
+        "6": "Machine learning algorithms learn patterns...",
+        "7": "Neural networks can be used for..."
+    },
+    "retrieved": {
+        "uuid-1": [1, 4, 5],
+        "uuid-2": [4, 2, 6],
+        "uuid-3": [3, 1, 7]
+    }
+}

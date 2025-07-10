@@ -16,7 +16,7 @@ from config import Evaluation
 cs = ConfigStore.instance()
 cs.store(name="evaluation_config", node=Evaluation)
 
-@hydra.main(config_path = "conf", config_name="config", version_base="1.1")
+@hydra.main(config_path = "conf", config_name="config_dev", version_base="1.1")
 def main(cfg: Evaluation):
     '''✨ Main function to run the BERGEN-UP ✨'''
     pprint.pprint(cfg, indent=4)
