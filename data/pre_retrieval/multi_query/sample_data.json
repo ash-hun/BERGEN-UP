@@ -1,0 +1,40 @@
+{
+    "metadata": {
+        "description": "Multi-query generation evaluation dataset",
+        "purpose": "Evaluate the quality of generated multiple queries from original queries"
+    },
+    "original_query": {
+        "uuid-1": "What are the benefits and challenges of implementing machine learning in healthcare?",
+        "uuid-2": "How do transformers work in natural language processing?",
+        "uuid-3": "What is the difference between supervised and unsupervised learning?",
+        "uuid-4": "Explain the concept of overfitting and how to prevent it",
+        "uuid-5": "What are the applications of computer vision in autonomous vehicles?"
+    },
+    "multi_queries": {
+        "uuid-1": [
+            "What are the advantages of using machine learning in medical diagnosis?",
+            "What challenges exist when deploying ML models in healthcare settings?",
+            "How does machine learning improve patient outcomes in healthcare?"
+        ],
+        "uuid-2": [
+            "What is the architecture of transformer models in NLP?",
+            "How do attention mechanisms work in transformers?",
+            "What makes transformers better than RNNs for language tasks?"
+        ],
+        "uuid-3": [
+            "What is supervised learning and when is it used?",
+            "What is unsupervised learning and its applications?",
+            "How do you choose between supervised and unsupervised learning methods?"
+        ],
+        "uuid-4": [
+            "What is overfitting in machine learning models?",
+            "What techniques can prevent overfitting in neural networks?",
+            "How do you detect if a model is overfitting?"
+        ],
+        "uuid-5": [
+            "How is computer vision used in self-driving cars?",
+            "What computer vision tasks are essential for autonomous vehicles?",
+            "What are the challenges of implementing CV in autonomous driving?"
+        ]
+    }
+}
