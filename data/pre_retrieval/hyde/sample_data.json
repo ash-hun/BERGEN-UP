@@ -1,0 +1,20 @@
+{
+    "metadata": {
+        "description": "HyDE (Hypothetical Document Embeddings) evaluation dataset",
+        "purpose": "Evaluate the quality of generated hypothetical documents and their impact on retrieval"
+    },
+    "query": {
+        "uuid-1": "What are the latest advances in quantum computing?",
+        "uuid-2": "How does blockchain technology ensure security?",
+        "uuid-3": "What are the applications of graph neural networks?",
+        "uuid-4": "How do large language models understand context?",
+        "uuid-5": "What are the principles of federated learning?"
+    },
+    "hyde_documents": {
+        "uuid-1": "Recent advances in quantum computing include significant breakthroughs in quantum error correction, with Google's Willow chip achieving quantum supremacy in specific tasks. IBM has developed quantum processors with over 1000 qubits, while researchers have made progress in topological qubits for more stable quantum states. Quantum algorithms for drug discovery and cryptography have shown promising results, with companies like IonQ and Rigetti pushing the boundaries of practical quantum applications.",
+        "uuid-2": "Blockchain technology ensures security through multiple mechanisms. First, it uses cryptographic hashing where each block contains a hash of the previous block, creating an immutable chain. The distributed ledger system means data is replicated across multiple nodes, making it extremely difficult to tamper with. Consensus mechanisms like Proof of Work or Proof of Stake ensure agreement on the state of the blockchain. Additionally, public-key cryptography enables secure transactions without revealing private information.",
+        "uuid-3": "Graph neural networks (GNNs) have found diverse applications across multiple domains. In drug discovery, GNNs predict molecular properties and design new compounds by representing molecules as graphs. Social network analysis uses GNNs for recommendation systems and community detection. In computer vision, GNNs enable scene understanding and object relationship modeling. Traffic prediction systems leverage GNNs to model road networks, while knowledge graphs benefit from GNN-based reasoning and completion tasks.",
+        "uuid-4": "Large language models understand context through sophisticated attention mechanisms, particularly the transformer architecture. These models process sequences of tokens and build contextual representations by attending to relevant parts of the input. The self-attention mechanism allows the model to weigh the importance of different words based on their relationships. Positional encodings help maintain sequence order, while multiple attention heads capture different types of relationships. Pre-training on vast text corpora enables models to learn contextual patterns and semantic relationships.",
+        "uuid-5": "Federated learning operates on several key principles. First, it enables collaborative model training without centralizing data, preserving privacy. The process involves distributing a global model to edge devices, where local training occurs on private data. These devices compute model updates based on their local data and send only the updates (not the data) back to a central server. The server aggregates these updates using algorithms like FedAvg to improve the global model. Differential privacy and secure aggregation techniques further enhance privacy protection."
+    }
+}
