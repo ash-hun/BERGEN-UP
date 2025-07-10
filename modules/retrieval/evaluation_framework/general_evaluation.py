@@ -1,6 +1,5 @@
 from typing import Dict, List, Any
 from .base_evaluation import BaseRetrievalEvaluation
-import uuid
 
 class GeneralRetrievalEvaluation(BaseRetrievalEvaluation):
     """

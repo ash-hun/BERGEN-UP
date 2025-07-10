@@ -1,22 +1,23 @@
 import contextlib
+from pandas import DataFrame
+
+from rich import print
+from rich.table import Table
 from rich.errors import NotRenderableError
 
-def rich_display_dataframe(df, title="Dataframe") -> None:
-    """Display dataframe as table using rich library.
-    Args:
+def rich_display_dataframe(df:DataFrame, title:str="Dataframe") -> None:
+    """
+    [ Display dataframe as table using rich library. ]
+
+    * Args:
         df (pd.DataFrame): dataframe to display
         title (str, optional): title of the table. Defaults to "Dataframe".
-    Raises:
+    * Raises:
         NotRenderableError: if dataframe cannot be rendered
-    Returns:
+    * Returns:
         rich.table.Table: rich table
-    
-    Resource : https://gist.github.com/izikeros/b0d32072f234fba73650eb4b1e9c0017
     """
-    from rich import print
-    from rich.table import Table
-
-    # ensure dataframe contains only string values
+    # Ensure dataframe contains only string values
     df = df.astype(str)
 
     table = Table(title=title)

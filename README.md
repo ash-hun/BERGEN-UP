@@ -91,16 +91,6 @@ $ uv run pipeline.py label='__experiments_name__'
         strategies: 
             - sample_data_path: "${hydra:runtime.cwd}/data/retrieval/sample_data.json"
             - top_k: 10
-            - strategies: 
-                - Semantic Search:
-                    embedding_model: "text-embedding-3-large"
-                - Lexical Search:
-                    embedding_model: "text-embedding-3-large"
-                - Hybrid Search:
-                    embedding_model: "text-embedding-3-large"
-                    scoring_method: "convex combination"
-                    lexical_weight: 0.5
-                    semantic_weight: 0.5
     ```
 
 </details>

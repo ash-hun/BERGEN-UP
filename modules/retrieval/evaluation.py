@@ -32,11 +32,11 @@ class RetrievalEvaluation:
     }
     '''
     def __init__(
-        self, 
-        retrieval_strategy: List[dict],
-        openai_api_key: Optional[str] = None,
-        top_k_values: List[int] = None
-    ) -> None:
+            self, 
+            retrieval_strategy: List[dict],
+            openai_api_key: Optional[str] = None,
+            top_k_values: List[int] = None
+        ) -> None:
         self.retrieval_strategy = retrieval_strategy
         self.openai_api_key = openai_api_key
         self.top_k_values = top_k_values or [1, 3, 5, 10, 20]
@@ -107,7 +107,7 @@ class RetrievalEvaluation:
                 self.console.log(f"❌ Evaluation failed: {str(e)}", style="bold red")
             raise e
     
-    def _display_results(self, results: Dict[str, Dict[str, float]]) -> None:
+    def _display_results(self, summary:bool=True, results: Dict[str, Dict[str, float]]=None) -> None:
         """
         Display evaluation results in a formatted table.
         
@@ -146,14 +146,15 @@ class RetrievalEvaluation:
         rich_display_dataframe(df, title="Retrieval Performance Metrics")
         
         # Display summary
-        summary = self.evaluator.get_summary_report(results)
-        self.console.log("\n📈 Summary:", style="bold cyan")
-        self.console.log(f"Best Precision: {summary['best_precision']['value']:.4f} @k={summary['best_precision']['at_k']}")
-        self.console.log(f"Best Recall: {summary['best_recall']['value']:.4f} @k={summary['best_recall']['at_k']}")
-        self.console.log(f"Best F1: {summary['best_f1']['value']:.4f} @k={summary['best_f1']['at_k']}")
-        self.console.log(f"Best NDCG: {summary['best_ndcg']['value']:.4f} @k={summary['best_ndcg']['at_k']}")
-        self.console.log(f"Best Hit Rate: {summary['best_hit_rate']['value']:.4f} @k={summary['best_hit_rate']['at_k']}")
-        self.console.log(f"MRR: {summary['mrr']:.4f}")
+        if summary:
+            summary = self.evaluator.get_summary_report(results)
+            self.console.log("\n📈 Summary:", style="bold cyan")
+            self.console.log(f"Best Precision: {summary['best_precision']['value']:.4f} @k={summary['best_precision']['at_k']}")
+            self.console.log(f"Best Recall: {summary['best_recall']['value']:.4f} @k={summary['best_recall']['at_k']}")
+            self.console.log(f"Best F1: {summary['best_f1']['value']:.4f} @k={summary['best_f1']['at_k']}")
+            self.console.log(f"Best NDCG: {summary['best_ndcg']['value']:.4f} @k={summary['best_ndcg']['at_k']}")
+            self.console.log(f"Best Hit Rate: {summary['best_hit_rate']['value']:.4f} @k={summary['best_hit_rate']['at_k']}")
+            self.console.log(f"MRR: {summary['mrr']:.4f}")
     
     def _load_sample_data(self) -> Dict[str, Any]:
         """
