@@ -6,6 +6,7 @@ from modules.retrieval.evaluation import RetrievalEvaluation
 from modules.generation.evaluation import GenerationEvaluation
 from modules.pre_retrieval.evaluation import PreRetrievalEvaluation
 from modules.post_retrieval.evaluation import PostRetrievalEvaluation
+from modules.benchmark.evaluation import BenchmarkEvaluation
 
 class RAG:
     ''' 🥑 Orchestration of BERGEN-UP RAG pipeline 🥑 '''
@@ -49,54 +50,94 @@ class RAG:
             openai_api_key=self.config.common.OPENAI_API_KEY
         )
     
+    def _setup_benchmark_evaluation(self) -> BenchmarkEvaluation:
+        return BenchmarkEvaluation(
+            benchmark_strategy=self.config.benchmark.strategies,
+            openai_api_key=self.config.common.OPENAI_API_KEY
+        )
+    
     def evaluate(self, verbose:bool=True) -> None:
         ''' [ Main function to run the BERGEN-UP RAG pipeline ] '''
         # Chunking Evaluation
-        if hasattr(self.config.chunking, 'strategies') and self.config.chunking.strategies:
-            # Title Logging
-            self.console.log("Chunking Evaluation", style="bold yellow")
-            chunking_evaluator = self._setup_chunking_evaluation()
-            chunking_evaluator.run(verbose=verbose)
-        else:
+        try:
+            if hasattr(self.config.chunking, 'strategies') and self.config.chunking.strategies:
+                # Title Logging
+                self.console.log("Chunking Evaluation", style="bold yellow")
+                chunking_evaluator = self._setup_chunking_evaluation()
+                chunking_evaluator.run(verbose=verbose)
+            else:
+                # Exception Logging
+                self.console.log("Chunking strategies not found in config", style="bold red")
+        except AttributeError:
             # Exception Logging
             self.console.log("Chunking strategies not found in config", style="bold red")
         
         # Pre-retrieval Evaluation  
-        if hasattr(self.config.pre_retrieval, 'strategies') and self.config.pre_retrieval.strategies:
-            # Title Logging
-            self.console.log("Pre-retrieval Evaluation", style="bold yellow")
-            pre_retrieval_evaluator = self._setup_pre_retrieval_evaluation()
-            pre_retrieval_evaluator.run(verbose=verbose)
-        else:
+        try:
+            if hasattr(self.config.pre_retrieval, 'strategies') and self.config.pre_retrieval.strategies:
+                # Title Logging
+                self.console.log("Pre-retrieval Evaluation", style="bold yellow")
+                pre_retrieval_evaluator = self._setup_pre_retrieval_evaluation()
+                pre_retrieval_evaluator.run(verbose=verbose)
+            else:
+                # Exception Logging
+                self.console.log("Pre-retrieval strategies not found in config", style="bold red")
+        except AttributeError:
             # Exception Logging
             self.console.log("Pre-retrieval strategies not found in config", style="bold red")
 
         # Retrieval Evaluation
-        if hasattr(self.config.retrieval, 'strategies') and self.config.retrieval.strategies:
-            # Title Logging
-            self.console.log("Retrieval Evaluation", style="bold yellow")
-            retrieval_evaluator = self._setup_retrieval_evaluation()
-            retrieval_evaluator.run(verbose=verbose)
-        else:
+        try:
+            if hasattr(self.config.retrieval, 'strategies') and self.config.retrieval.strategies:
+                # Title Logging
+                self.console.log("Retrieval Evaluation", style="bold yellow")
+                retrieval_evaluator = self._setup_retrieval_evaluation()
+                retrieval_evaluator.run(verbose=verbose)
+            else:
+                # Exception Logging
+                self.console.log("Retrieval strategies not found in config", style="bold red")
+        except AttributeError:
             # Exception Logging
             self.console.log("Retrieval strategies not found in config", style="bold red")
 
         # Post-retrieval Evaluation
-        if hasattr(self.config.post_retrieval, 'strategies') and self.config.post_retrieval.strategies:
-            # Title Logging
-            self.console.log("Post-retrieval Evaluation", style="bold yellow")
-            post_retrieval_evaluator = self._setup_post_retrieval_evaluation()
-            post_retrieval_evaluator.run(verbose=verbose)
-        else:
+        try:
+            if hasattr(self.config.post_retrieval, 'strategies') and self.config.post_retrieval.strategies:
+                # Title Logging
+                self.console.log("Post-retrieval Evaluation", style="bold yellow")
+                post_retrieval_evaluator = self._setup_post_retrieval_evaluation()
+                post_retrieval_evaluator.run(verbose=verbose)
+            else:
+                # Exception Logging
+                self.console.log("Post-retrieval strategies not found in config", style="bold red")
+        except AttributeError:
             # Exception Logging
             self.console.log("Post-retrieval strategies not found in config", style="bold red")
 
         # Generation Evaluation
-        if hasattr(self.config.generation, 'strategies') and self.config.generation.strategies:
-            # Title Logging
-            self.console.log("Generation Evaluation", style="bold yellow")
-            generation_evaluator = self._setup_generation_evaluation()
-            generation_evaluator.run(verbose=verbose)
-        else:
+        try:
+            if hasattr(self.config.generation, 'strategies') and self.config.generation.strategies:
+                # Title Logging
+                self.console.log("Generation Evaluation", style="bold yellow")
+                generation_evaluator = self._setup_generation_evaluation()
+                generation_evaluator.run(verbose=verbose)
+            else:
+                # Exception Logging
+                self.console.log("Generation strategies not found in config", style="bold red")
+        except AttributeError:
             # Exception Logging
             self.console.log("Generation strategies not found in config", style="bold red")
+        
+        # Benchmark Evaluation
+        try:
+            if hasattr(self.config, 'benchmark') and hasattr(self.config.benchmark, 'strategies') and self.config.benchmark.strategies:
+                # Title Logging
+                self.console.log("Benchmark Evaluation", style="bold yellow")
+                benchmark_evaluator = self._setup_benchmark_evaluation()
+                benchmark_evaluator.run(verbose=verbose)
+            else:
+                # Exception Logging
+                self.console.log("Benchmark strategies not found in config", style="bold red")
+        except AttributeError:
+            # Exception Logging
+            self.console.log("Benchmark strategies not found in config", style="bold red")

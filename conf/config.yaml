@@ -6,28 +6,68 @@ hydra:
   sweep:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${label}
 
-
 common:
   OPENAI_API_KEY: "your openai api key"
 chunking:
   strategies: 
+    - question_set_path: "${hydra:runtime.cwd}/data/chunking/question_set/questions_df_chatlogs.csv"
+    - corpora_id_paths:
+        chatlogs: "${hydra:runtime.cwd}/data/chunking/corpora/chatlogs.md"
     # - Semantic Chunking:
     #       mode: openai
     #       embedding_model: "text-embedding-3-large"
     #       custom_url: "custom_embedding_function_api_address"
-    - Recursive Token Chunking:
-        chunk_size: 800
-        chunk_overlap: 400
-    # - Fixed Token Chunking:
+    # - Recursive Token Chunking:
     #     chunk_size: 800
     #     chunk_overlap: 400
+    - Fixed Token Chunking:
+        chunk_size: 800
+        chunk_overlap: 400
 pre_retrieval:
-  name: "Pre-retrieval"
+  strategies: 
+    - Multi Query:
+        path: "${hydra:runtime.cwd}/data/pre_retrieval/multi_query/sample_data.json"
+    - Query Decomposition:
+        path: "${hydra:runtime.cwd}/data/pre_retrieval/query_decomposition/sample_data.json"
+    - HyDE:
+        path: "${hydra:runtime.cwd}/data/pre_retrieval/hyde/sample_data.json"
 retrieval:
-  name: "Retrieval"
+  strategies: 
+    - sample_data_path: "${hydra:runtime.cwd}/data/retrieval/sample_retrieval_data.json"
+    - top_k: 10
 post_retrieval:
-  name: "Post-retrieval"
+  strategies: 
+    - path: "${hydra:runtime.cwd}/data/post_retrieval/"
+    - strategies: "Post-retrieval"
 generation:
-  name: "Generation"
-evaluation:
-  name: "Evaluation"
+  strategies: 
+    - sample_data_path: "${hydra:runtime.cwd}/data/generation/sample_generation_data.json"
+    - evaluation_metrics:
+        - groundedness
+        - answer_relevancy
+    - g_eval_config:
+        mode: "standard"  # "standard" or "custom"
+        metric_name: "Answer Relevancy"  # For standard mode: Answer Relevancy, Consistency, Fluency, Groundness, Relevancy
+        metric_llm:
+          model_name: "gpt-4"
+          temperature: 0.0
+          max_tokens: 1024
+        # For custom mode, uncomment below:
+        # metric_description: "Evaluating how well the answer addresses the question"
+        # metric_criterion: |
+        #   - 1: Poor. The answer does not address the question at all.
+        #   - 2: Fair. The answer partially addresses the question.
+        #   - 3: Good. The answer mostly addresses the question.
+        #   - 4: Very Good. The answer comprehensively addresses the question.
+        #   - 5: Excellent. The answer perfectly addresses all aspects of the question.
+benchmark:
+  strategies:
+    - llm_endpoint: "openai/gpt-4o"  # Use OpenAI GPT-4o model
+    - needle_config_path: "${hydra:runtime.cwd}/data/benchmark/needle_config.json"
+    - NIAH:
+        context_lengths: [1000, 2000, 4000]  # Reduced for testing
+        document_depth_percents: [0.1, 0.5, 0.9]  # Reduced for testing
+        num_samples_per_test: 2  # Reduced for testing
+        save_results: true
+        save_contexts: false
+        test_cases: ["single_needle", "multi_needle"]  # Select which test cases to run

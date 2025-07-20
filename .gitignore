@@ -167,6 +167,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
+# VS Code
+.vscode/
+
 # Vibe Coding
 CLAUDE.md
 
@@ -178,4 +181,7 @@ CLAUDE.md
 
 # hydra settings
 outputs/
+conf/config_dev.
+
+# dev
 conf/config_dev.yaml

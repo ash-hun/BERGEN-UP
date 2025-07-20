@@ -19,6 +19,10 @@ class PostRetrieval:
 @dataclass
 class Generation:
     name: str
+
+@dataclass
+class Benchmark:
+    name: str
     
 @dataclass
 class Evaluation:
@@ -27,3 +31,4 @@ class Evaluation:
     retrieval: Retrieval
     post_retrieval: PostRetrieval
     generation: Generation
+    benchmark: Benchmark

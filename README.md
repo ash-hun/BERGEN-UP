@@ -26,20 +26,27 @@
             - mrr
     - *Post-Retrieval*
     - *Generation*
-        - static metric
+        - standard metrics (G-Eval)
             - groundedness
             - answer_relevancy
+            - consistency
+            - fluency
+            - relevancy
+        - custom metrics
 - **BENCHMARK Pipeline**
     - *Bench-Test*
-        - BEIR
+        - NIAH (Needle in the haystack)
+            - selective sub-modules
+            - JSON config support
+        <!-- - BEIR
         - ASQA
         - TriviaQA
         - HotpotQA
         - WikiQA
-        - NQ
-- **Extra Module** for RAG
+        - NQ -->
+<!-- - **Extra Module** for RAG
     - Generate Synthetic Dataset
-        - QA (= Question Answering)
+        - QA (= Question Answering) -->
 
 
 ## 🥑 How to run pipeline?
@@ -149,12 +156,20 @@ $ uv run pipeline.py label='__experiments_name__'
 
 - 핵심 기능
     - G-Eval 기반 생성 품질 평가
-        - Metric : 
+        - Standard Metrics (표준 평가 지표):
             - groundedness : 생성된 답변이 제공된 컨텍스트에 얼마나 근거하는지 평가 (0-1)
             - answer_relevancy : 생성된 답변이 질문에 얼마나 관련성이 있는지 평가 (0-1)
+            - consistency : 생성된 답변의 내부 일관성 평가 (0-1)
+            - fluency : 생성된 답변의 유창성 및 가독성 평가 (0-1)
+            - relevancy : 검색된 컨텍스트가 질문에 얼마나 관련성이 있는지 평가 (0-1)
+        - Custom Metrics (사용자 정의 평가 지표):
+            - 사용자가 정의한 평가 기준에 따른 맞춤형 평가 가능
+            - 1-5 점 척도로 세밀한 평가 지원
 
 - 사용법
     - `conf/config.yaml`의 `generation` 섹션에 아래 내용을 참고하여 작성한다.
+    
+    **기본 사용법 (Standard Metrics):**
     ```yaml
     generation:
         strategies: 
@@ -162,6 +177,114 @@ $ uv run pipeline.py label='__experiments_name__'
             - evaluation_metrics:
                 - groundedness
                 - answer_relevancy
+            - g_eval_config:
+                mode: "standard"
+                metric_name: "Answer Relevancy"  # 선택 가능: Answer Relevancy, Consistency, Fluency, Groundness, Relevancy
+                metric_llm:
+                    model_name: "gpt-4"
+                    temperature: 0.0
+                    max_tokens: 1024
+    ```
+    
+    **커스텀 메트릭 사용법:**
+    ```yaml
+    generation:
+        strategies: 
+            - sample_data_path: "${hydra:runtime.cwd}/data/generation/sample_generation_data.json"
+            - g_eval_config:
+                mode: "custom"
+                metric_name: "Technical Accuracy"
+                metric_description: "Evaluating how technically accurate and precise the answer is"
+                metric_criterion: |
+                    - 1: Very Poor. The answer contains significant technical errors.
+                    - 2: Poor. The answer has some technical accuracy but contains notable errors.
+                    - 3: Fair. The answer is generally accurate but lacks precision.
+                    - 4: Good. The answer is technically accurate with minor issues.
+                    - 5: Excellent. The answer is perfectly accurate and technically precise.
+                metric_llm:
+                    model_name: "gpt-4"
+                    temperature: 0.0
+                    max_tokens: 1024
+    ```
+
+</details>
+
+<details>
+<summary>Benchmark Module</summary>
+
+- 핵심 기능
+    - NIAH (Needle In A Haystack) 평가
+        - 긴 컨텍스트 내에서 특정 정보를 찾는 능력 평가
+        - 다양한 테스트 케이스 지원:
+            - single_needle : 단일 정보 검색
+            - multi_needle : 다중 정보 검색
+            - complex_info : 복잡한 정보 검색
+            - password_test : 암호 찾기 테스트
+            - location_test : 위치 정보 찾기 테스트
+        - 컨텍스트 길이와 깊이에 따른 성능 분석
+        - 선택적 테스트 케이스 실행 지원
+        - JSON/YAML 설정 파일 지원
+
+- 사용법
+    - `conf/config.yaml`의 `benchmark` 섹션에 아래 내용을 참고하여 작성한다.
+    
+    **기본 사용법:**
+    ```yaml
+    benchmark:
+        strategies:
+            - llm_endpoint: "openai/gpt-4o"
+            - needle_config_path: "${hydra:runtime.cwd}/data/benchmark/needle_config.json"
+            - NIAH:
+                context_lengths: [1000, 2000, 4000]
+                document_depth_percents: [0.1, 0.5, 0.9]
+                num_samples_per_test: 2
+                save_results: true
+                save_contexts: false
+                test_cases: ["single_needle", "multi_needle", "complex_info"]  # 실행할 테스트 선택
+    ```
+    
+    **needle_config.json 형식:**
+    ```json
+    {
+        "single_needle": {
+            "needles": ["The secret code is ALPHA-7234."],
+            "question": "What is the secret code?",
+            "true_answer": "ALPHA-7234"
+        },
+        "multi_needle": {
+            "needles": [
+                "The meeting will be held in Conference Room B.",
+                "The meeting time is 3:30 PM.",
+                "The meeting date is next Tuesday."
+            ],
+            "question": "When and where is the meeting?",
+            "true_answer": "The meeting will be held in Conference Room B at 3:30 PM next Tuesday."
+        },
+        "complex_info": {
+            "needles": [
+                "Dr. Smith discovered the rare element Xenium in 2019.",
+                "Xenium has atomic number 142.",
+                "The element exhibits superconducting properties at room temperature."
+            ],
+            "question": "What are the key facts about Xenium?",
+            "true_answer": "Dr. Smith discovered Xenium in 2019. It has atomic number 142 and exhibits superconducting properties at room temperature."
+        }
+    }
+    ```
+    
+    **특정 테스트만 실행하기:**
+    ```yaml
+    benchmark:
+        strategies:
+            - llm_endpoint: "openai/gpt-4o"
+            - needle_config_path: "${hydra:runtime.cwd}/data/benchmark/needle_config.json"
+            - NIAH:
+                context_lengths: [1000, 2000]
+                document_depth_percents: [0.1, 0.5]
+                num_samples_per_test: 1
+                save_results: true
+                save_contexts: false
+                test_cases: ["single_needle", "multi_needle"]  # 2개 테스트만 실행
     ```
 
 </details>
