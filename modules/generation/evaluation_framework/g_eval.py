@@ -1,28 +1,20 @@
-from typing import Dict, List, Any
-import instructor
-from openai import OpenAI
-from pydantic import BaseModel, Field
+from typing import Dict, List, Any, Literal, Optional
+import asyncio
 from rich.console import Console
-from tqdm import tqdm
-
-class EvaluationResult(BaseModel):
-    """Pydantic model for evaluation results"""
-    score: float = Field(ge=0.0, le=1.0, description="Evaluation score between 0 and 1")
-    reasoning: str = Field(description="Brief explanation of the evaluation")
-
+from modules.generation.evaluation_framework.evaluate.llm_as_a_judge import Evaluator
+from modules.generation.evaluation_framework.utils.datamodel import GEvalResponse
 
 class GEval:
     """
     G-Eval implementation for generation evaluation.
     
-    Evaluates generation quality using two metrics:
-    - Groundedness: How well the answer is grounded in the provided context
-    - Answer Relevancy: How relevant the answer is to the question
+    Supports both standard and custom metrics:
+    - Standard metrics: Groundedness, Answer Relevancy, Consistency, Fluency, Relevancy
+    - Custom metrics: User-defined evaluation criteria
     """
     
     def __init__(self, openai_api_key: str):
-        # Patch OpenAI client with instructor
-        self.client = instructor.from_openai(OpenAI(api_key=openai_api_key))
+        self.openai_api_key = openai_api_key
         self.console = Console()
     
     def evaluate_groundedness(self, context: List[str], answer: str) -> float:
@@ -36,43 +28,32 @@ class GEval:
         Returns:
             Groundedness score (0-1)
         """
-        context_text = "\n".join(context)
+        config = {
+            "metric_name": "Groundness",
+            "metric_llm": {
+                "model_name": "gpt-4",
+                "temperature": 0.0,
+                "max_tokens": 1024
+            }
+        }
         
-        prompt = f"""You are evaluating the groundedness of an answer based on the given context.
-
-Context:
-{context_text}
-
-Answer:
-{answer}
-
-Evaluation Criteria:
-1. Is the answer fully supported by the context? (Score 0 if not at all, 1 if completely)
-2. Does the answer contain any information not present in the context?
-3. Are all claims in the answer verifiable from the context?
-
-Please evaluate the groundedness of the answer on a scale from 0 to 1, where:
-- 0: The answer is completely ungrounded (contains information not in context)
-- 0.5: The answer is partially grounded (some information from context, some not)
-- 1: The answer is fully grounded (all information comes from context)
-"""
+        evaluator = Evaluator(config, mode='standard', api_key=self.openai_api_key)
         
+        # Create a single sample for evaluation
+        data = {
+            "question": {"sample": ""},
+            "context": {"sample": context},
+            "answer": {"sample": answer}
+        }
+        
+        # Run evaluation synchronously
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         try:
-            result = self.client.chat.completions.create(
-                model="gpt-4",
-                response_model=EvaluationResult,
-                messages=[
-                    {"role": "system", "content": "You are an expert evaluator for text generation quality."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.0
-            )
-            
-            return result.score
-            
-        except Exception as e:
-            self.console.log(f"[red]Error in groundedness evaluation: {str(e)}[/red]")
-            return 0.0
+            response = loop.run_until_complete(evaluator.run(data, verbose=False))
+            return response.metric_score
+        finally:
+            loop.close()
     
     def evaluate_answer_relevancy(self, question: str, answer: str) -> float:
         """
@@ -85,45 +66,120 @@ Please evaluate the groundedness of the answer on a scale from 0 to 1, where:
         Returns:
             Relevancy score (0-1)
         """
-        prompt = f"""You are evaluating the relevancy of an answer to a given question.
-
-Question:
-{question}
-
-Answer:
-{answer}
-
-Evaluation Criteria:
-1. Does the answer directly address the question asked?
-2. Is the answer complete and comprehensive?
-3. Does the answer stay focused on the question without unnecessary information?
-
-Please evaluate the relevancy of the answer on a scale from 0 to 1, where:
-- 0: The answer is completely irrelevant to the question
-- 0.5: The answer partially addresses the question
-- 1: The answer perfectly addresses the question
-"""
+        config = {
+            "metric_name": "Answer Relevancy",
+            "metric_llm": {
+                "model_name": "gpt-4",
+                "temperature": 0.0,
+                "max_tokens": 1024
+            }
+        }
         
+        evaluator = Evaluator(config, mode='standard', api_key=self.openai_api_key)
+        
+        # Create a single sample for evaluation
+        data = {
+            "question": {"sample": question},
+            "answer": {"sample": answer}
+        }
+        
+        # Run evaluation synchronously
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         try:
-            result = self.client.chat.completions.create(
-                model="gpt-4",
-                response_model=EvaluationResult,
-                messages=[
-                    {"role": "system", "content": "You are an expert evaluator for text generation quality."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.0
-            )
+            response = loop.run_until_complete(evaluator.run(data, verbose=False))
+            return response.metric_score
+        finally:
+            loop.close()
+    
+    def evaluate_with_metric(
+        self, 
+        metric_name: Literal['Answer Relevancy', 'Consistency', 'Fluency', 'Groundness', 'Relevancy'],
+        data: Dict[str, Any],
+        model_name: str = "gpt-4",
+        temperature: float = 0.0
+    ) -> GEvalResponse:
+        """
+        Evaluate using a specific standard metric.
+        
+        Args:
+            metric_name: Name of the metric to use
+            data: Evaluation data
+            model_name: LLM model to use for evaluation
+            temperature: Temperature for LLM generation
             
-            return result.score
+        Returns:
+            GEvalResponse with evaluation results
+        """
+        config = {
+            "metric_name": metric_name,
+            "metric_llm": {
+                "model_name": model_name,
+                "temperature": temperature,
+                "max_tokens": 1024
+            }
+        }
+        
+        evaluator = Evaluator(config, mode='standard', api_key=self.openai_api_key)
+        
+        # Run evaluation
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            response = loop.run_until_complete(evaluator.run(data, verbose=True))
+            return response
+        finally:
+            loop.close()
+    
+    def evaluate_custom(
+        self,
+        metric_name: str,
+        metric_description: str,
+        metric_criterion: str,
+        data: Dict[str, Any],
+        model_name: str = "gpt-4",
+        temperature: float = 0.0
+    ) -> GEvalResponse:
+        """
+        Evaluate using custom metric definition.
+        
+        Args:
+            metric_name: Custom metric name
+            metric_description: Description of what the metric measures
+            metric_criterion: Evaluation criteria (1-5 scale)
+            data: Evaluation data
+            model_name: LLM model to use for evaluation
+            temperature: Temperature for LLM generation
             
-        except Exception as e:
-            self.console.log(f"[red]Error in answer relevancy evaluation: {str(e)}[/red]")
-            return 0.0
+        Returns:
+            GEvalResponse with evaluation results
+        """
+        config = {
+            "metric_name": metric_name,
+            "metric_description": metric_description,
+            "metric_criterion": metric_criterion,
+            "metric_llm": {
+                "model_name": model_name,
+                "temperature": temperature,
+                "max_tokens": 1024
+            }
+        }
+        
+        evaluator = Evaluator(config, mode='custom', api_key=self.openai_api_key)
+        
+        # Run evaluation
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            response = loop.run_until_complete(evaluator.run(data, verbose=True))
+            return response
+        finally:
+            loop.close()
     
     def evaluate_batch(self, data: Dict[str, Any], verbose: bool = True) -> Dict[str, Dict[str, float]]:
         """
-        Evaluate a batch of generation results.
+        Evaluate a batch of generation results with standard metrics.
+        This method maintains backward compatibility.
         
         Args:
             data: Dictionary containing questions, contexts, and answers
@@ -135,28 +191,25 @@ Please evaluate the relevancy of the answer on a scale from 0 to 1, where:
         results = {}
         uuids = list(data['question'].keys())
         
-        # Create progress bar
-        with tqdm(total=len(uuids), desc="Evaluating generation", disable=not verbose) as pbar:
-            for uuid in uuids:
-                question = data['question'][uuid]
-                context = data['context'][uuid]
-                answer = data['answer'][uuid]
-                
-                groundedness_score = self.evaluate_groundedness(context, answer)
-                relevancy_score = self.evaluate_answer_relevancy(question, answer)
-                
-                results[uuid] = {
-                    'groundedness': groundedness_score,
-                    'answer_relevancy': relevancy_score
-                }
-                
-                if verbose:
-                    pbar.set_postfix({
-                        'UUID': uuid,
-                        'G': f"{groundedness_score:.3f}",
-                        'R': f"{relevancy_score:.3f}"
-                    })
-                
-                pbar.update(1)
+        # Evaluate groundedness
+        groundness_response = self.evaluate_with_metric(
+            'Groundness',
+            data,
+            verbose=verbose
+        )
+        
+        # Evaluate answer relevancy
+        relevancy_response = self.evaluate_with_metric(
+            'Answer Relevancy',
+            data,
+            verbose=verbose
+        )
+        
+        # Combine results
+        for i, uuid in enumerate(uuids):
+            results[uuid] = {
+                'groundedness': groundness_response.detailed_results[i]['metric_score'] if i < len(groundness_response.detailed_results) else 0.0,
+                'answer_relevancy': relevancy_response.detailed_results[i]['metric_score'] if i < len(relevancy_response.detailed_results) else 0.0
+            }
         
         return results

@@ -1,15 +1,16 @@
 # ------------------------------------------------------------
-# BERGEN-UP
+# BERGEN-UP : All-in-One Evaluation Toolkit for RAG Step-by-Steps
 # Copyright (c) 2025-present Ash-Hun.
 # MIT license
 # ------------------------------------------------------------
+
 import hydra
+import pprint
 from multiprocessing import set_start_method
 from hydra.core.config_store import ConfigStore
 import warnings 
-warnings.filterwarnings("ignore", category=UserWarning, module="hydra") # Hydra 경고 메시지 필터링
+warnings.filterwarnings("ignore", category=UserWarning, module="hydra")
 
-import pprint
 from modules.rag import RAG
 from config import Evaluation
 
@@ -28,4 +29,4 @@ def main(cfg: Evaluation):
 
 if __name__ == "__main__":
     set_start_method('spawn')
-    main()  # type: ignore # hydra.main 데코레이터가 자동으로 cfg를 주입합니다
+    main()  # hydra.main 데코레이터가 자동으로 cfg를 주입합니다
