@@ -1,0 +1,35 @@
+{
+    "single_needle": {
+        "needles": ["The secret code is ALPHA-7234."],
+        "question": "What is the secret code?",
+        "true_answer": "ALPHA-7234"
+    },
+    "multi_needle": {
+        "needles": [
+            "The meeting will be held in Conference Room B.",
+            "The meeting time is 3:30 PM.",
+            "The meeting date is next Tuesday."
+        ],
+        "question": "When and where is the meeting?",
+        "true_answer": "The meeting will be held in Conference Room B at 3:30 PM next Tuesday."
+    },
+    "complex_info": {
+        "needles": [
+            "Dr. Smith discovered the rare element Xenium in 2019.",
+            "Xenium has atomic number 142.",
+            "The element exhibits superconducting properties at room temperature."
+        ],
+        "question": "What are the key facts about Xenium?",
+        "true_answer": "Dr. Smith discovered Xenium in 2019. It has atomic number 142 and exhibits superconducting properties at room temperature."
+    },
+    "password_test": {
+        "needles": ["The system password is BlueMoon2023."],
+        "question": "What is the system password?",
+        "true_answer": "BlueMoon2023"
+    },
+    "location_test": {
+        "needles": ["The treasure is buried under the old oak tree in Central Park."],
+        "question": "Where is the treasure buried?",
+        "true_answer": "Under the old oak tree in Central Park"
+    }
+}

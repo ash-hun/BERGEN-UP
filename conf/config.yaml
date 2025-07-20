@@ -63,7 +63,7 @@ generation:
 benchmark:
   strategies:
     - llm_endpoint: "openai/gpt-4o"  # Use OpenAI GPT-4o model
-    - needle_config_path: "${hydra:runtime.cwd}/data/benchmark/needle_config.json"
+    - needle_config_path: "${hydra:runtime.cwd}/data/benchmark/NIAH/needle_config.json"
     - NIAH:
         context_lengths: [1000, 2000, 4000]  # Reduced for testing
         document_depth_percents: [0.1, 0.5, 0.9]  # Reduced for testing
@@ -71,3 +71,27 @@ benchmark:
         save_results: true
         save_contexts: false
         test_cases: ["single_needle", "multi_needle"]  # Select which test cases to run
+function_chat:
+  strategies:
+    - llm_model_name: "gpt-4o"  # Model to evaluate
+    - llm_api_key: "${common.OPENAI_API_KEY}"  # API key for model under test
+    - llm_endpoint: "https://api.openai.com/v1"  # Endpoint for model under test
+    
+    # Optional: Evaluator model configuration (defaults to GPT-4 if not specified)
+    - evaluator_model: "gpt-4"  # Model used as judge
+    - evaluator_endpoint: "https://api.openai.com/v1"  # Endpoint for evaluator
+    
+    # Evaluation configuration
+    - evaluation_types: ["singlecall"]  # Types of evaluation to run
+    - data_path: "${hydra:runtime.cwd}/data/benchmark/functionchat_bench"  # Path to FunctionChat data
+    - dataset_files:  # Custom dataset file names
+        dialog: "FunctionChat-Dialog-Sample.jsonl"  # Dialog dataset file
+        singlecall: "FunctionChat-Singlecall-Sample.jsonl"  # Singlecall dataset file
+    - temperature: 0.0  # Temperature for model predictions
+    - tool_choice: "auto"  # Tool choice strategy
+    - only_exact: true  # If true, only run exact match evaluation
+    
+    # Local model example configuration (uncomment to use local models)
+    # - llm_model_name: "llama-7b-chat"
+    # - llm_api_key: "local-key"  # Can be dummy for local models
+    # - llm_endpoint: "http://localhost:8000/v1"  # Local endpoint URL
