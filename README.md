@@ -38,6 +38,10 @@
         - NIAH (Needle in the haystack)
             - selective sub-modules
             - JSON config support
+        - FunctionChat Bench
+            - Korean function calling evaluation
+            - LLM-as-Judge methodology
+            - Local model support
         <!-- - BEIR
         - ASQA
         - TriviaQA
@@ -233,7 +237,7 @@ $ uv run pipeline.py label='__experiments_name__'
     benchmark:
         strategies:
             - llm_endpoint: "openai/gpt-4o"
-            - needle_config_path: "${hydra:runtime.cwd}/data/benchmark/needle_config.json"
+            - needle_config_path: "${hydra:runtime.cwd}/data/benchmark/NIAH/needle_config.json"
             - NIAH:
                 context_lengths: [1000, 2000, 4000]
                 document_depth_percents: [0.1, 0.5, 0.9]
@@ -277,7 +281,7 @@ $ uv run pipeline.py label='__experiments_name__'
     benchmark:
         strategies:
             - llm_endpoint: "openai/gpt-4o"
-            - needle_config_path: "${hydra:runtime.cwd}/data/benchmark/needle_config.json"
+            - needle_config_path: "${hydra:runtime.cwd}/data/benchmark/NIAH/needle_config.json"
             - NIAH:
                 context_lengths: [1000, 2000]
                 document_depth_percents: [0.1, 0.5]
@@ -286,5 +290,65 @@ $ uv run pipeline.py label='__experiments_name__'
                 save_contexts: false
                 test_cases: ["single_needle", "multi_needle"]  # 2개 테스트만 실행
     ```
+
+    **FunctionChat Bench 평가:**
+    
+    FunctionChat-Bench는 한국어 LLM의 함수 호출(function calling) 능력을 평가하는 벤치마크입니다.
+    
+    - 주요 특징:
+        - Dialog/SingleCall 두 가지 평가 타입 지원
+        - Exact Match와 LLM-as-Judge 평가 방식
+        - OpenAI 호환 API 지원 (로컬 모델 사용 가능)
+        - 한국어 함수 호출 시나리오 평가
+    
+    **기본 사용법:**
+    ```yaml
+    function_chat:
+        strategies:
+            # 평가할 모델 설정
+            - llm_model_name: "gpt-4o"
+            - llm_api_key: "${common.OPENAI_API_KEY}"
+            - llm_endpoint: "https://api.openai.com/v1"
+            
+            # 평가자 모델 설정 (선택사항, 기본값: GPT-4)
+            - evaluator_model: "gpt-4"
+            - evaluator_endpoint: "https://api.openai.com/v1"
+            
+            # 평가 설정
+            - evaluation_types: ["dialog", "singlecall"]  # 평가 타입 선택
+            - data_path: "${hydra:runtime.cwd}/data/benchmark/functionchat_bench"
+            - dataset_files:  # 커스텀 데이터셋 파일 지정 (선택사항)
+                dialog: "FunctionChat-Dialog-Sample.jsonl"
+                singlecall: "FunctionChat-Singlecall-Sample.jsonl"
+            - temperature: 0.0
+            - tool_choice: "auto"
+            - only_exact: false  # true: exact match만, false: LLM 평가 포함
+    ```
+    
+    **로컬 모델 사용 예시:**
+    ```yaml
+    function_chat:
+        strategies:
+            # vLLM 또는 다른 OpenAI 호환 서버 사용
+            - llm_model_name: "llama-3-70b-instruct"
+            - llm_api_key: "dummy-key"  # 로컬 서버에서는 무시됨
+            - llm_endpoint: "http://localhost:8000/v1"
+            
+            # 평가자는 GPT-4 사용 (권장)
+            - evaluator_model: "gpt-4"
+            - evaluator_endpoint: "https://api.openai.com/v1"
+            
+            - evaluation_types: ["singlecall"]
+            - only_exact: false
+    ```
+    
+    **데이터셋 형식:**
+    - Dialog: 다중 턴 대화에서의 함수 호출 평가
+    - SingleCall: 단일 쿼리에 대한 함수 호출 평가
+    - 각 예제는 tools, query, ground_truth를 포함
+    
+    **평가 결과:**
+    - Accuracy: 전체 정답률
+    - 상세 결과는 `outputs/function_chat_summary.json`에 저장
 
 </details>

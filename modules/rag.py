@@ -7,6 +7,7 @@ from modules.generation.evaluation import GenerationEvaluation
 from modules.pre_retrieval.evaluation import PreRetrievalEvaluation
 from modules.post_retrieval.evaluation import PostRetrievalEvaluation
 from modules.benchmark.evaluation import BenchmarkEvaluation
+from modules.benchmark.function_chat.evaluation import FunctionChatEvaluation
 
 class RAG:
     ''' 🥑 Orchestration of BERGEN-UP RAG pipeline 🥑 '''
@@ -55,6 +56,57 @@ class RAG:
             benchmark_strategy=self.config.benchmark.strategies,
             openai_api_key=self.config.common.OPENAI_API_KEY
         )
+    
+    def _setup_function_chat_evaluation(self) -> FunctionChatEvaluation:
+        # Convert config to dictionary format expected by FunctionChatEvaluation
+        function_chat_config = {
+            'output_dir': './outputs'
+        }
+        
+        # Extract function_chat specific config from strategies
+        if hasattr(self.config.function_chat, 'strategies') and self.config.function_chat.strategies:
+            for strategy in self.config.function_chat.strategies:
+                # OmegaConf DictConfig should be treated like dict
+                if hasattr(strategy, 'items'):
+                    for key, value in strategy.items():
+                        # Handle special cases for API key interpolation
+                        if key == 'llm_api_key' and isinstance(value, str) and '${common.OPENAI_API_KEY}' in value:
+                            function_chat_config[key] = self.config.common.OPENAI_API_KEY
+                        else:
+                            function_chat_config[key] = value
+        
+        
+        # Ensure data_path is properly resolved
+        if 'data_path' in function_chat_config:
+            import os
+            from hydra.core.hydra_config import HydraConfig
+            
+            data_path = function_chat_config['data_path']
+            # Handle Hydra variable interpolation
+            if '${hydra:runtime.cwd}' in data_path:
+                try:
+                    # Get the original working directory before Hydra changed it
+                    hydra_cfg = HydraConfig.get()
+                    original_cwd = hydra_cfg.runtime.cwd
+                    data_path = data_path.replace('${hydra:runtime.cwd}', original_cwd)
+                except:
+                    # Fallback: use the parent directory of the current file as project root
+                    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                    data_path = data_path.replace('${hydra:runtime.cwd}', project_root)
+            
+            # Ensure absolute path
+            if not os.path.isabs(data_path):
+                try:
+                    hydra_cfg = HydraConfig.get()
+                    original_cwd = hydra_cfg.runtime.cwd
+                    data_path = os.path.join(original_cwd, data_path)
+                except:
+                    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                    data_path = os.path.join(project_root, data_path)
+            
+            function_chat_config['data_path'] = data_path
+        
+        return FunctionChatEvaluation(function_chat_config)
     
     def evaluate(self, verbose:bool=True) -> None:
         ''' [ Main function to run the BERGEN-UP RAG pipeline ] '''
@@ -141,3 +193,17 @@ class RAG:
         except AttributeError:
             # Exception Logging
             self.console.log("Benchmark strategies not found in config", style="bold red")
+        
+        # FunctionChat Evaluation
+        try:
+            if hasattr(self.config, 'function_chat') and hasattr(self.config.function_chat, 'strategies') and self.config.function_chat.strategies:
+                # Title Logging
+                self.console.log("FunctionChat Evaluation", style="bold yellow")
+                function_chat_evaluator = self._setup_function_chat_evaluation()
+                function_chat_evaluator.run_evaluation()
+            else:
+                # Exception Logging
+                self.console.log("FunctionChat strategies not found in config", style="bold red")
+        except AttributeError:
+            # Exception Logging
+            self.console.log("FunctionChat strategies not found in config", style="bold red")
