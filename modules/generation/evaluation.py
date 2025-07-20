@@ -14,6 +14,7 @@ class GenerationEvaluation:
     Evaluates generation quality using G-Eval with metrics:
     - Groundedness: How well the answer is grounded in the provided context
     - Answer Relevancy: How relevant the answer is to the question
+    - Custom metrics: User-defined evaluation criteria
     
     Input format:
     {
@@ -37,8 +38,18 @@ class GenerationEvaluation:
         self.openai_api_key = openai_api_key
         self.console = Console()
         
-        # Extract sample data path from strategies (following chunking/retrieval module pattern)
-        self.sample_data_path = generation_strategy[0]['sample_data_path'] if generation_strategy and 'sample_data_path' in generation_strategy[0] else None
+        # Extract configuration from strategies
+        self.sample_data_path = None
+        self.evaluation_metrics = ['groundedness', 'answer_relevancy']  # Default metrics
+        self.g_eval_config = None
+        
+        for strategy in generation_strategy:
+            if 'sample_data_path' in strategy:
+                self.sample_data_path = strategy['sample_data_path']
+            if 'evaluation_metrics' in strategy:
+                self.evaluation_metrics = strategy['evaluation_metrics']
+            if 'g_eval_config' in strategy:
+                self.g_eval_config = strategy['g_eval_config']
         
         # Initialize G-Eval evaluator
         if openai_api_key:
@@ -78,17 +89,85 @@ class GenerationEvaluation:
         if verbose:
             self.console.log("🤖 Starting Generation Evaluation", style="bold blue")
             self.console.log(f"Number of questions: {len(data['question'])}", style="blue")
-            self.console.log("Evaluation metrics: Groundedness, Answer Relevancy", style="blue")
-        
+            
         try:
-            # Run evaluation
-            results = self.evaluator.evaluate_batch(data, verbose=verbose)
+            # Check if G-Eval config is provided
+            if self.g_eval_config:
+                mode = self.g_eval_config.get('mode', 'standard')
+                
+                if mode == 'standard':
+                    # Use standard metric evaluation
+                    metric_name = self.g_eval_config.get('metric_name', 'Answer Relevancy')
+                    model_name = self.g_eval_config.get('metric_llm', {}).get('model_name', 'gpt-4')
+                    temperature = self.g_eval_config.get('metric_llm', {}).get('temperature', 0.0)
+                    
+                    if verbose:
+                        self.console.log(f"Using G-Eval standard mode with metric: {metric_name}", style="blue")
+                    
+                    response = self.evaluator.evaluate_with_metric(
+                        metric_name=metric_name,
+                        data=data,
+                        model_name=model_name,
+                        temperature=temperature
+                    )
+                    
+                    # Convert response to results format
+                    results = {}
+                    for i, result in enumerate(response.detailed_results):
+                        uuid = result['question_id']
+                        results[uuid] = {
+                            metric_name.lower().replace(' ', '_'): result['metric_score']
+                        }
+                    
+                    # Display G-Eval results
+                    self._display_g_eval_results(response)
+                    
+                elif mode == 'custom':
+                    # Use custom metric evaluation
+                    metric_name = self.g_eval_config.get('metric_name', 'Custom Metric')
+                    metric_description = self.g_eval_config.get('metric_description', '')
+                    metric_criterion = self.g_eval_config.get('metric_criterion', '')
+                    model_name = self.g_eval_config.get('metric_llm', {}).get('model_name', 'gpt-4')
+                    temperature = self.g_eval_config.get('metric_llm', {}).get('temperature', 0.0)
+                    
+                    if verbose:
+                        self.console.log(f"Using G-Eval custom mode with metric: {metric_name}", style="blue")
+                    
+                    response = self.evaluator.evaluate_custom(
+                        metric_name=metric_name,
+                        metric_description=metric_description,
+                        metric_criterion=metric_criterion,
+                        data=data,
+                        model_name=model_name,
+                        temperature=temperature
+                    )
+                    
+                    # Convert response to results format
+                    results = {}
+                    for i, result in enumerate(response.detailed_results):
+                        uuid = result['question_id']
+                        results[uuid] = {
+                            'custom_metric': result['metric_score']
+                        }
+                    
+                    # Display G-Eval results
+                    self._display_g_eval_results(response)
+                    
+                else:
+                    raise ValueError(f"Invalid G-Eval mode: {mode}")
+                    
+            else:
+                # Use default evaluation (backward compatibility)
+                if verbose:
+                    self.console.log("Using default evaluation metrics: Groundedness, Answer Relevancy", style="blue")
+                    
+                results = self.evaluator.evaluate_batch(data, verbose=verbose)
+                
+                # Always display results regardless of verbose setting
+                self._display_results(results)
             
             if verbose:
                 self.console.log("✅ Evaluation completed successfully", style="bold green")
-            
-            # Always display results regardless of verbose setting
-            self._display_results(results)
             
             return results
             
@@ -158,3 +237,29 @@ class GenerationEvaluation:
         self.console.log("\n📈 Summary:", style="bold cyan")
         self.console.log(f"Average Groundedness: {avg_groundedness:.4f}")
         self.console.log(f"Average Answer Relevancy: {avg_relevancy:.4f}")
+    
+    def _display_g_eval_results(self, response) -> None:
+        """
+        Display G-Eval evaluation results in a formatted table.
+        
+        Args:
+            response: GEvalResponse object from evaluation
+        """
+        # Create DataFrame for display
+        display_data = [{
+            'Metric': response.metric_name,
+            'Average Score': f"{response.metric_score:.4f}",
+            'Total Samples': len(response.detailed_results) if response.detailed_results else 0
+        }]
+        
+        # Convert to DataFrame and display
+        df = pd.DataFrame(display_data)
+        
+        self.console.log("\n📊 G-Eval Results:", style="bold yellow")
+        rich_display_dataframe(df, title="G-Eval Metrics")
+        
+        # Display summary
+        self.console.log("\n📈 Summary:", style="bold cyan")
+        self.console.log(f"Evaluation ID: {response.metric_evaluation_id}")
+        self.console.log(f"Timestamp: {response.metric_timestamp}")
+        self.console.log(f"Explanation: {response.metric_explanation}")
