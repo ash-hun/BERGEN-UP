@@ -1,8 +1,12 @@
 # BERGEN-UP
 
->   New version of BERGEN (a.k.a BERGEN UP✨)
+>   All mighty tool for RAG like ✨BERGEN UP✨
 
 [**BERGEN**](https://github.com/naver/bergen?tab=readme-ov-file) (*BEnchmarking Retrieval-augmented GENeration*) is a library designed to benchmark RAG systems with a focus on question-answering (QA) by **NAVER Labs**. It addresses the challenge of inconsistent benchmarking in comparing approaches and understanding the impact of each component in a RAG pipeline. Unlike BERGEN, BERGEN-UP is an end-to-end evaluation pipeline that enhanced focuses on the diversity of RAG pipelines and the functionality of each modules.
+
+## 🥑 What is support to `BERGEN-UP`?
+- RAG pipeline experiment management using YAML configuration files
+- Support to evaluate APIs for each sub-module
 
 
 ## 🍒 Key Feature
@@ -24,7 +28,6 @@
             - ndcg@k
             - hit_rate@k
             - mrr
-    - *Post-Retrieval*
     - *Generation*
         - standard metrics (G-Eval)
             - groundedness
@@ -35,7 +38,7 @@
         - custom metrics
 - **BENCHMARK Pipeline**
     - *Bench-Test*
-        - NIAH (Needle in the haystack)
+        - U-NIAH (Needle in the haystack)
             - selective sub-modules
             - JSON config support
         - FunctionChat Bench
@@ -53,7 +56,7 @@
         - QA (= Question Answering) -->
 
 
-## 🥑 How to run pipeline?
+## 🍑 How to run pipeline?
 
 ##### 1. Write your evaluation in `conf/config.yaml`
 
