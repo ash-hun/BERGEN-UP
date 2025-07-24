@@ -48,9 +48,6 @@ class GeneralRetrievalEvaluation(BaseRetrievalEvaluation):
         for k in self.top_k_values:
             results[f'top_{k}'] = self._calculate_metrics_at_k(data, k)
         
-        # Calculate MRR (independent of k)
-        results['mrr'] = {'mrr': self._calculate_average_mrr(data)}
-        
         return results
     
     def _calculate_metrics_at_k(self, data: Dict[str, Any], k: int) -> Dict[str, float]:
@@ -69,7 +66,8 @@ class GeneralRetrievalEvaluation(BaseRetrievalEvaluation):
             'recall': 0.0,
             'f1': 0.0,
             'ndcg': 0.0,
-            'hit_rate': 0.0
+            'hit_rate': 0.0,
+            'mrr': 0.0  # Add MRR@k
         }
         
         question_count = len(data['question'])
@@ -91,6 +89,7 @@ class GeneralRetrievalEvaluation(BaseRetrievalEvaluation):
             metrics['f1'] += self._calculate_f1_at_k(retrieved, relevant, k)
             metrics['ndcg'] += self._calculate_ndcg_at_k(retrieved, relevant, k)
             metrics['hit_rate'] += self._calculate_hit_rate_at_k(retrieved, relevant, k)
+            metrics['mrr'] += self._calculate_mrr_at_k(retrieved, relevant, k)  # Add MRR@k calculation
         
         # Average the metrics
         for metric in metrics:
@@ -166,7 +165,7 @@ class GeneralRetrievalEvaluation(BaseRetrievalEvaluation):
             'best_f1': {'value': 0.0, 'at_k': 0},
             'best_ndcg': {'value': 0.0, 'at_k': 0},
             'best_hit_rate': {'value': 0.0, 'at_k': 0},
-            'mrr': results.get('mrr', {}).get('mrr', 0.0)
+            'best_mrr': {'value': 0.0, 'at_k': 0}
         }
         
         # Find best scores for each metric
@@ -175,7 +174,7 @@ class GeneralRetrievalEvaluation(BaseRetrievalEvaluation):
             if top_k_key in results:
                 metrics = results[top_k_key]
                 
-                for metric in ['precision', 'recall', 'f1', 'ndcg', 'hit_rate']:
+                for metric in ['precision', 'recall', 'f1', 'ndcg', 'hit_rate', 'mrr']:
                     if metric in metrics:
                         if metrics[metric] > summary[f'best_{metric}']['value']:
                             summary[f'best_{metric}']['value'] = metrics[metric]

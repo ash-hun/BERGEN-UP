@@ -155,6 +155,27 @@ class BaseRetrievalEvaluation(ABC):
         
         return 0.0
     
+    def _calculate_mrr_at_k(self, retrieved: List[str], relevant: List[str], k: int) -> float:
+        """
+        Calculate Mean Reciprocal Rank at k (MRR@k).
+        
+        Args:
+            retrieved: List of retrieved documents
+            relevant: List of relevant documents
+            k: Number of top documents to consider
+            
+        Returns:
+            MRR@k score
+        """
+        # Only consider top-k documents
+        retrieved_at_k = retrieved[:k]
+        
+        for i, doc in enumerate(retrieved_at_k):
+            if doc in relevant:
+                return 1.0 / (i + 1)
+        
+        return 0.0
+    
     def _calculate_hit_rate_at_k(self, retrieved: List[str], relevant: List[str], k: int) -> float:
         """
         Calculate hit rate@k.

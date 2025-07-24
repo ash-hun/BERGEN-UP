@@ -98,7 +98,7 @@ class BenchmarkEvaluation:
             openai_api_key=self.openai_api_key
         )
     
-    def run(self, verbose: bool = True) -> pd.DataFrame:
+    def run(self, verbose: bool = True):
         """
         Run benchmark evaluation
         
@@ -106,12 +106,13 @@ class BenchmarkEvaluation:
             verbose: Whether to display detailed output
             
         Returns:
-            DataFrame with benchmark results
+            Dict with detailed benchmark results or DataFrame for backward compatibility
         """
         self.console.log("Starting Benchmark Evaluation", style="bold yellow")
         
         # Use asyncio to run async benchmarks
         all_results = []
+        detailed_results = None
         
         try:
             # Check if we're already in an async context (like FastAPI)
@@ -125,6 +126,9 @@ class BenchmarkEvaluation:
                         with concurrent.futures.ThreadPoolExecutor() as executor:
                             future = executor.submit(self._run_async_benchmark, benchmark_name, config)
                             results = future.result()
+                        
+                        # Store detailed results for API
+                        detailed_results = results
                         
                         # Extract key metrics for summary
                         if 'analysis' in results:
@@ -149,6 +153,9 @@ class BenchmarkEvaluation:
                         
                         results = self._run_async_benchmark(benchmark_name, config)
                         
+                        # Store detailed results for API
+                        detailed_results = results
+                        
                         # Extract key metrics for summary
                         if 'analysis' in results:
                             for test_name, analysis in results['analysis'].items():
@@ -167,8 +174,13 @@ class BenchmarkEvaluation:
         except Exception as e:
             self.console.print(f"[red]Error in benchmark evaluation: {e}[/red]")
         
-        # Create summary DataFrame
-        if all_results:
+        # Store detailed results as instance attribute for API access
+        self.detailed_results = detailed_results
+        
+        # Return detailed results if available (for API), otherwise summary DataFrame (for CLI)
+        if detailed_results:
+            return detailed_results
+        elif all_results:
             df = pd.DataFrame(all_results)
             if verbose:
                 rich_display_dataframe(df, title="Benchmark Evaluation Summary")

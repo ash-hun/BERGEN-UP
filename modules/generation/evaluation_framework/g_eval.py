@@ -258,11 +258,22 @@ class GEval:
             verbose=verbose
         )
         
-        # Combine results
+        # Combine results with null check
         for i, uuid in enumerate(uuids):
+            groundedness_score = 0.0
+            answer_relevancy_score = 0.0
+            
+            # Safe access to groundness_response
+            if groundness_response and groundness_response.detailed_results and i < len(groundness_response.detailed_results):
+                groundedness_score = groundness_response.detailed_results[i]['metric_score']
+            
+            # Safe access to relevancy_response  
+            if relevancy_response and relevancy_response.detailed_results and i < len(relevancy_response.detailed_results):
+                answer_relevancy_score = relevancy_response.detailed_results[i]['metric_score']
+            
             results[uuid] = {
-                'groundedness': groundness_response.detailed_results[i]['metric_score'] if i < len(groundness_response.detailed_results) else 0.0,
-                'answer_relevancy': relevancy_response.detailed_results[i]['metric_score'] if i < len(relevancy_response.detailed_results) else 0.0
+                'groundedness': groundedness_score,
+                'answer_relevancy': answer_relevancy_score
             }
         
         return results

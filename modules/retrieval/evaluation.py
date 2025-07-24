@@ -117,25 +117,16 @@ class RetrievalEvaluation:
         # Create DataFrame for display
         display_data = []
         
-        # Get MRR value if exists
-        mrr_value = results.get('mrr', {}).get('mrr', None)
-        
-        # Add top-k results with MRR
+        # Add top-k results
         for top_k_key in sorted(results.keys(), key=lambda x: int(x.replace('top_', '')) if x.startswith('top_') else 0):
             if top_k_key.startswith('top_'):
                 k_value = int(top_k_key.replace('top_', ''))
                 metrics = results[top_k_key]
                 
                 row = {'Top-K': k_value}
-                # Add all metrics from results
+                # Add all metrics from results (including MRR@k)
                 for metric, score in metrics.items():
                     row[metric.capitalize()] = f"{score:.4f}"
-                
-                # Add MRR value (same for all rows)
-                if mrr_value is not None:
-                    row['MRR'] = f"{mrr_value:.4f}"
-                else:
-                    row['MRR'] = '-'
                 
                 display_data.append(row)
         
@@ -154,7 +145,7 @@ class RetrievalEvaluation:
             self.console.log(f"Best F1: {summary['best_f1']['value']:.4f} @k={summary['best_f1']['at_k']}")
             self.console.log(f"Best NDCG: {summary['best_ndcg']['value']:.4f} @k={summary['best_ndcg']['at_k']}")
             self.console.log(f"Best Hit Rate: {summary['best_hit_rate']['value']:.4f} @k={summary['best_hit_rate']['at_k']}")
-            self.console.log(f"MRR: {summary['mrr']:.4f}")
+            self.console.log(f"Best MRR: {summary['best_mrr']['value']:.4f} @k={summary['best_mrr']['at_k']}")
     
     def _load_sample_data(self) -> Dict[str, Any]:
         """
