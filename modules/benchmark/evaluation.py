@@ -3,6 +3,7 @@ Benchmark Evaluation Module for BERGEN-UP
 Evaluates LLM performance using various benchmarks
 """
 import asyncio
+import concurrent.futures
 from typing import Optional, List, Dict, Any
 from rich.console import Console
 from pathlib import Path
@@ -37,6 +38,25 @@ class BenchmarkEvaluation:
         
         # Parse configuration
         self._parse_strategies()
+    
+    def _run_async_benchmark(self, benchmark_name: str, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Helper method to run async benchmark in a separate thread"""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            if benchmark_name == 'niah':
+                niah_eval = self._setup_niah_evaluation(config)
+                results = loop.run_until_complete(niah_eval.run())
+                return results
+            return {}
+        finally:
+            # Clean up any remaining tasks
+            pending = asyncio.all_tasks(loop)
+            for task in pending:
+                task.cancel()
+            if pending:
+                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            loop.close()
         
     def __str__(self) -> str:
         return "🎯 Benchmark Evaluation Module 🎯"
@@ -91,37 +111,61 @@ class BenchmarkEvaluation:
         self.console.log("Starting Benchmark Evaluation", style="bold yellow")
         
         # Use asyncio to run async benchmarks
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
         all_results = []
         
         try:
-            for benchmark_name, config in self.benchmarks_to_run:
-                if benchmark_name == 'niah':
-                    self.console.log(f"Running NIAH benchmark", style="cyan")
+            # Check if we're already in an async context (like FastAPI)
+            try:
+                current_loop = asyncio.get_running_loop()
+                # We're in an async context, run in a separate thread
+                for benchmark_name, config in self.benchmarks_to_run:
+                    if benchmark_name == 'niah':
+                        self.console.log(f"Running NIAH benchmark", style="cyan")
+                        
+                        with concurrent.futures.ThreadPoolExecutor() as executor:
+                            future = executor.submit(self._run_async_benchmark, benchmark_name, config)
+                            results = future.result()
+                        
+                        # Extract key metrics for summary
+                        if 'analysis' in results:
+                            for test_name, analysis in results['analysis'].items():
+                                all_results.append({
+                                    'benchmark': 'NIAH',
+                                    'test_case': test_name,
+                                    'overall_accuracy': analysis['overall_accuracy'],
+                                    'llm_endpoint': self.llm_endpoint
+                                })
+                        
+                        if verbose:
+                            self.console.log(f"NIAH benchmark completed", style="green")
                     
-                    # Setup and run NIAH evaluation
-                    niah_eval = self._setup_niah_evaluation(config)
-                    results = loop.run_until_complete(niah_eval.run())
+                    # Add more benchmark types here as they are implemented
+                        
+            except RuntimeError:
+                # No current loop, safe to create a new one (CLI context)
+                for benchmark_name, config in self.benchmarks_to_run:
+                    if benchmark_name == 'niah':
+                        self.console.log(f"Running NIAH benchmark", style="cyan")
+                        
+                        results = self._run_async_benchmark(benchmark_name, config)
+                        
+                        # Extract key metrics for summary
+                        if 'analysis' in results:
+                            for test_name, analysis in results['analysis'].items():
+                                all_results.append({
+                                    'benchmark': 'NIAH',
+                                    'test_case': test_name,
+                                    'overall_accuracy': analysis['overall_accuracy'],
+                                    'llm_endpoint': self.llm_endpoint
+                                })
+                        
+                        if verbose:
+                            self.console.log(f"NIAH benchmark completed", style="green")
                     
-                    # Extract key metrics for summary
-                    if 'analysis' in results:
-                        for test_name, analysis in results['analysis'].items():
-                            all_results.append({
-                                'benchmark': 'NIAH',
-                                'test_case': test_name,
-                                'overall_accuracy': analysis['overall_accuracy'],
-                                'llm_endpoint': self.llm_endpoint
-                            })
-                    
-                    if verbose:
-                        self.console.log(f"NIAH benchmark completed", style="green")
-                
-                # Add more benchmark types here as they are implemented
-        
-        finally:
-            loop.close()
+                    # Add more benchmark types here as they are implemented
+                        
+        except Exception as e:
+            self.console.print(f"[red]Error in benchmark evaluation: {e}[/red]")
         
         # Create summary DataFrame
         if all_results:

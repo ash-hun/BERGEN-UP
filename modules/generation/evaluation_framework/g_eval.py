@@ -1,5 +1,6 @@
 from typing import Dict, List, Any, Literal, Optional
 import asyncio
+import concurrent.futures
 from rich.console import Console
 from modules.generation.evaluation_framework.evaluate.llm_as_a_judge import Evaluator
 from modules.generation.evaluation_framework.utils.datamodel import GEvalResponse
@@ -16,6 +17,22 @@ class GEval:
     def __init__(self, openai_api_key: str):
         self.openai_api_key = openai_api_key
         self.console = Console()
+    
+    def _run_evaluation_sync(self, evaluator, data, verbose=False):
+        """Helper method to run evaluation in a separate thread"""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            response = loop.run_until_complete(evaluator.run(data, verbose=verbose))
+            return response
+        finally:
+            # Clean up any remaining tasks
+            pending = asyncio.all_tasks(loop)
+            for task in pending:
+                task.cancel()
+            if pending:
+                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            loop.close()
     
     def evaluate_groundedness(self, context: List[str], answer: str) -> float:
         """
@@ -47,13 +64,22 @@ class GEval:
         }
         
         # Run evaluation synchronously
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
         try:
-            response = loop.run_until_complete(evaluator.run(data, verbose=False))
-            return response.metric_score
-        finally:
-            loop.close()
+            # Check if we're already in an async context (like FastAPI)
+            try:
+                current_loop = asyncio.get_running_loop()
+                # We're in an async context, run in a separate thread
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(self._run_evaluation_sync, evaluator, data, False)
+                    response = future.result()
+                    return response.metric_score
+            except RuntimeError:
+                # No current loop, safe to create a new one (CLI context)
+                response = self._run_evaluation_sync(evaluator, data, False)
+                return response.metric_score
+        except Exception as e:
+            self.console.print(f"[red]Error in evaluation: {e}[/red]")
+            return 0.0
     
     def evaluate_answer_relevancy(self, question: str, answer: str) -> float:
         """
@@ -84,13 +110,22 @@ class GEval:
         }
         
         # Run evaluation synchronously
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
         try:
-            response = loop.run_until_complete(evaluator.run(data, verbose=False))
-            return response.metric_score
-        finally:
-            loop.close()
+            # Check if we're already in an async context (like FastAPI)
+            try:
+                current_loop = asyncio.get_running_loop()
+                # We're in an async context, run in a separate thread
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(self._run_evaluation_sync, evaluator, data, False)
+                    response = future.result()
+                    return response.metric_score
+            except RuntimeError:
+                # No current loop, safe to create a new one (CLI context)
+                response = self._run_evaluation_sync(evaluator, data, False)
+                return response.metric_score
+        except Exception as e:
+            self.console.print(f"[red]Error in evaluation: {e}[/red]")
+            return 0.0
     
     def evaluate_with_metric(
         self, 
@@ -123,13 +158,22 @@ class GEval:
         evaluator = Evaluator(config, mode='standard', api_key=self.openai_api_key)
         
         # Run evaluation
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
         try:
-            response = loop.run_until_complete(evaluator.run(data, verbose=True))
-            return response
-        finally:
-            loop.close()
+            # Check if we're already in an async context (like FastAPI)
+            try:
+                current_loop = asyncio.get_running_loop()
+                # We're in an async context, run in a separate thread
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(self._run_evaluation_sync, evaluator, data, True)
+                    response = future.result()
+                    return response
+            except RuntimeError:
+                # No current loop, safe to create a new one (CLI context)
+                response = self._run_evaluation_sync(evaluator, data, True)
+                return response
+        except Exception as e:
+            self.console.print(f"[red]Error in evaluation: {e}[/red]")
+            return None
     
     def evaluate_custom(
         self,
@@ -168,13 +212,22 @@ class GEval:
         evaluator = Evaluator(config, mode='custom', api_key=self.openai_api_key)
         
         # Run evaluation
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
         try:
-            response = loop.run_until_complete(evaluator.run(data, verbose=True))
-            return response
-        finally:
-            loop.close()
+            # Check if we're already in an async context (like FastAPI)
+            try:
+                current_loop = asyncio.get_running_loop()
+                # We're in an async context, run in a separate thread
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(self._run_evaluation_sync, evaluator, data, True)
+                    response = future.result()
+                    return response
+            except RuntimeError:
+                # No current loop, safe to create a new one (CLI context)
+                response = self._run_evaluation_sync(evaluator, data, True)
+                return response
+        except Exception as e:
+            self.console.print(f"[red]Error in evaluation: {e}[/red]")
+            return None
     
     def evaluate_batch(self, data: Dict[str, Any], verbose: bool = True) -> Dict[str, Dict[str, float]]:
         """
